@@ -183,7 +183,7 @@ function App() {
         <br></br>
         <label>Updated Aeg:</label>
         <input
-          type="text"
+          type="datetime-local"
           name="aeg"
           value={updatedEksam.aeg}
           onChange={handleInputChange}
