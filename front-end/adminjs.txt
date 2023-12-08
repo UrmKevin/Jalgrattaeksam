@@ -1,0 +1,192 @@
+﻿import { useEffect, useState } from 'react';
+import '../App.css';
+
+function Admin() {
+  const [eksamid, setEksamid] = useState([]);
+  const [newEksam, setNewEksam] = useState({
+    koha: "",
+    aeg: "",
+    eksamineerija: "",
+  });
+  const [updatedEksam, setUpdatedEksam] = useState({
+    id: 0,
+    koha: '',
+    aeg: '',
+    eksamineerija: '',
+  });
+
+  // useEffect(() => {
+  //   const storedUser = localStorage.getItem('user'); // Retrieve user from localStorage
+  //   if (storedUser) {
+  //     setUser(storedUser);
+  //   }
+  // }, []);
+
+  // get database
+  const fetchEksamid = async () => {
+    try {
+      const response = await fetch('https://localhost:7025/Eksam');
+      const data = await response.json();
+      setEksamid(data);
+    } catch (error) {
+      console.error('Error fetching eksamid:', error);
+    }
+  };
+  useEffect(() => {
+    fetchEksamid();
+  }, []);
+  // delete
+  function kustuta(index) {
+    fetch(`https://localhost:7025/Eksam/kustuta/${index}`, {"method": "DELETE"})
+      .then(res => res.json())
+      .then(json => setEksamid(json));
+  }
+  // add
+  const lisa = async () => {
+    try {
+      await fetch('https://localhost:7025/Eksam/lisa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newEksam),
+      }); 
+      fetchEksamid();
+    } catch (error) {
+      console.error('Error adding eksam:', error);
+    }
+  };
+  // update
+  const updateEksam = async () => {
+    const response = await fetch(`https://localhost:7025/Eksam/muuda/${updatedEksam.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedEksam),
+    });
+
+    if (response.ok) {
+      const updatedEksamList = await response.json();
+      setEksamid(updatedEksamList);
+      setUpdatedEksam({
+        id: 0,
+        koha: '',
+        aeg: '',
+        eksamineerija: '',
+      });
+    } else {
+      console.error('Failed to update Eksam');
+    }
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUpdatedEksam((prevEksam) => ({
+      ...prevEksam,
+      [name]: value,
+    }));
+  };
+  const setEditEksam = (eksam) => {
+    setUpdatedEksam({
+      id: eksam.id,
+      koha: eksam.koha,
+      aeg: eksam.aeg,
+      eksamineerija: eksam.eksamineerija,
+    });
+  };
+
+  //formate date and time
+  function formatDateTime(dateTimeString) {
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short',
+    };
+  
+    const formattedDateTime = new Date(dateTimeString).toLocaleString(undefined, options);
+    return formattedDateTime;
+  }
+
+  return (
+    <div className="Admin">
+      <h2>Lisa Uus Eksam</h2>
+      <div>
+        <label>Koha:</label>
+        <input
+          type="text"
+          value={newEksam.koha}
+          onChange={(e) => setNewEksam({ ...newEksam, koha: e.target.value })}
+        />
+      </div>
+      <div>
+        <label>Aeg:</label>
+        <input
+          type="datetime-local"
+          value={newEksam.aeg}
+          onChange={(e) => setNewEksam({ ...newEksam, aeg: e.target.value })}
+        />
+      </div>
+      <div>
+        <label>Eksamineerija:</label>
+        <input
+          type="text"
+          value={newEksam.eksamineerija}
+          onChange={(e) => setNewEksam({ ...newEksam, eksamineerija: e.target.value })}
+        />
+      </div>
+      <button onClick={lisa}>Add Eksam</button>
+      <br/>
+      <table>
+        <tr>
+          <th>Koha</th>
+          <th>Aeg</th>
+          <th>Eksamineerija</th>
+          <th>Kustuta</th>
+          <th>Muuda</th>
+        </tr>
+        {eksamid.map((eksam, index) => 
+        <tr>
+          <td>{eksam.koha}</td>
+          <td>{formatDateTime(eksam.aeg)}</td>
+          <td>{eksam.eksamineerija}</td>
+          <td><button onClick={() => kustuta(eksam.id)} id='X'>x</button></td>
+          <td><button onClick={() => setEditEksam(eksam)} id='muuda'>Muuda</button></td>
+        </tr>
+        )}
+      </table>
+      <div>
+        <label>Updated Koha:</label>
+        <input
+          type="text"
+          name="koha"
+          value={updatedEksam.koha}
+          onChange={handleInputChange}
+        />
+        <br></br>
+        <label>Updated Aeg:</label>
+        <input
+          type="text"
+          name="aeg"
+          value={updatedEksam.aeg}
+          onChange={handleInputChange}
+        />
+        <br></br>
+        <label>Updated Eksamineerija:</label>
+        <input
+          type="text"
+          name="eksamineerija"
+          value={updatedEksam.eksamineerija}
+          onChange={handleInputChange}
+        />
+        <br></br>
+        <button onClick={updateEksam}>Update Eksam</button>
+      </div>
+    </div>
+  );
+}
+
+export default Admin;
