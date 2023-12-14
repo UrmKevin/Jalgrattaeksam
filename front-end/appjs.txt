@@ -1,31 +1,64 @@
-﻿import { useState } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+﻿import React, { useState } from 'react';
+import { Route, Routes, useNavigate, Navigate, Link } from 'react-router-dom';
 import './App.css';
+import Login from './Authorization/Login';
 import Admin from './Pages/Admin';
 import Main from './Pages/Main';
 
 function App() {
   const navigate = useNavigate();
+  const [isLoggedIn, setLoggedIn] = useState(false);
+
+  const handleLogin = () => {
+    setLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setLoggedIn(false);
+  };
 
   return (
     <div>
+      <nav>
+        <div className="nav-container">
+          <div className="nav-links-left">
+            <Link to="/">Home</Link>
+          </div>
+          {isLoggedIn ? (
+            <React.Fragment>
+              <div className="nav-links-right">
+                <Link to="/admin">Admini lehe</Link>
+              </div>
+              <div className="nav-links-right">
+                <Link to="/logout" onClick={handleLogout}>
+                  Logout
+                </Link>
+              </div>
+            </React.Fragment>
+          ) : (
+            <div className="nav-links-right">
+              <Link to="/admin">Login</Link>
+            </div>
+          )}
+        </div>
+      </nav>
       <Routes>
-        <Route
-        path="/Main"
-        element={<Main />}
-        />
-        <Route
-        path="/Admin"
-        element={<Admin />}
-        />
-        <Route
-        path="/"
-        element={<Main />}
-        />
+        <Route path="/Main" element={<Main />} />
+        {isLoggedIn ? (
+          <Route path="/Admin" element={<Admin />} />
+        ) : (
+          <Route path="/Admin" element={<Login onLogin={handleLogin} />} />
+        )}
+        <Route path="/logout" element={<Logout onLogout={handleLogout} />} />
+        <Route path="/" element={<Main />} />
       </Routes>
-
     </div>
   );
 }
+
+const Logout = ({ onLogout }) => {
+  onLogout(); // Call the onLogout function passed as a prop
+  return <Navigate to="/" />;
+};
 
 export default App;

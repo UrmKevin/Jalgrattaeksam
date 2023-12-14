@@ -1,6 +1,7 @@
 ﻿using Jalgrattaeksam.Data;
 using Jalgrattaeksam.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace Jalgrattaeksam.Controllers
 {
@@ -61,21 +62,20 @@ namespace Jalgrattaeksam.Controllers
         [HttpPut("muuda/{id}")]
         public ActionResult<List<Eksam>> PutEksam(int id, [FromBody] Eksam updatedEksam)
         {
-            var Eksam = _context.Eksam.Find(id);
+            var eksam = _context.Eksam.Find(id);
 
-            if (Eksam == null)
+            if (eksam == null)
             {
                 return NotFound();
             }
 
-            Eksam.Koha = updatedEksam.Koha;
-            Eksam.Eksamineerija = updatedEksam.Eksamineerija;
+            eksam.Koha = updatedEksam.Koha;
+            eksam.Eksamineerija = updatedEksam.Eksamineerija;
 
-            _context.Eksam.Update(Eksam);
+            _context.Eksam.Update(eksam);
             _context.SaveChanges();
 
-            return Ok(_context.Eksam);
+            return Ok(_context.Eksam.ToList());
         }
-
     }
 }

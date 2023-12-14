@@ -1,9 +1,10 @@
-﻿import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+﻿import React, { useEffect, useState } from 'react';
 import '../App.css';
 
 function Main() {
   const [eksamid, setEksamid] = useState([]);
+  const [searchByKoha, setSearchByKoha] = useState('');
+  const [searchByAeg, setSearchByAeg] = useState('');
 
   // get database
   const fetchEksamid = async () => {
@@ -15,11 +16,11 @@ function Main() {
       console.error('Error fetching eksamid:', error);
     }
   };
+
   useEffect(() => {
     fetchEksamid();
   }, []);
 
-  //formate date and time
   function formatDateTime(dateTimeString) {
     const options = {
       year: 'numeric',
@@ -30,44 +31,67 @@ function Main() {
       second: '2-digit',
       timeZoneName: 'short',
     };
-  
+
     const formattedDateTime = new Date(dateTimeString).toLocaleString(undefined, options);
     return formattedDateTime;
   }
 
+  const filteredEksamidByKoha = eksamid.filter((eksam) =>
+    eksam.koha.toLowerCase().includes(searchByKoha.toLowerCase())
+  );
+  const filteredEksamidByAeg = eksamid.filter((eksam) => {
+    const formattedDate = new Date(eksam.aeg).toLocaleDateString('en-US');
+    return formattedDate.includes(searchByAeg);
+  });
+  const handleDateChange = (e) => {
+    const selectedDate = new Date(e.target.value).toLocaleDateString('en-US');
+    setSearchByAeg(selectedDate);
+  };
+  // resets date
+  const resetDateInput = () => {
+    setSearchByAeg('');
+  };
+
   return (
     <div>
-      <nav>
-        <div className="nav-container">
-          <Link to="/">Home</Link>
-          <div className="nav-link">
-            <Link to="/admin">Admini lehe</Link>
-          </div>
-        </div>
-      </nav>
-            {/* {user ? (
-              <div>
-                <Link to="/admin" className="admin-link">Admini lehe</Link>
-              </div>
-            ) : (
-              <div>
-                <Link to="/main" className="main-link">Kodulehe</Link>
-              </div>
-            )} */}
       <h1>Kudulehe</h1>
+      <input
+        type="text"
+        placeholder="Search by Koha"
+        value={searchByKoha}
+        onChange={(e) => setSearchByKoha(e.target.value)}
+        className="search-bar"
+      />
+      <input
+        type="date"
+        value={searchByAeg}
+        onChange={handleDateChange}
+        className="search-bar"
+      />
+
+      <button onClick={resetDateInput} id="ResetAeg" className="search-bar">
+        Reset Aeg
+      </button>
+
       <table>
-        <tr>
-          <th>Koha</th>
-          <th>Aeg</th>
-          <th>Eksamineerija</th>
-        </tr>
-        {eksamid.map((eksam, index) => 
-        <tr>
-          <td>{eksam.koha}</td>
-          <td>{formatDateTime(eksam.aeg)}</td>
-          <td>{eksam.eksamineerija}</td>
-        </tr>
-        )}
+        <thead>
+          <tr>
+            <th>Koha</th>
+            <th>Aeg</th>
+            <th>Eksamineerija</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredEksamidByKoha
+            .filter((eksam) => filteredEksamidByAeg.includes(eksam))
+            .map((eksam, index) => (
+              <tr key={index}>
+                <td>{eksam.koha}</td>
+                <td>{formatDateTime(eksam.aeg)}</td>
+                <td>{eksam.eksamineerija}</td>
+              </tr>
+            ))}
+        </tbody>
       </table>
     </div>
   );

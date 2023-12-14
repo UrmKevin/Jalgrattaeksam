@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import '../App.css';
 
 function Admin() {
@@ -14,13 +14,7 @@ function Admin() {
     aeg: '',
     eksamineerija: '',
   });
-
-  // useEffect(() => {
-  //   const storedUser = localStorage.getItem('user'); // Retrieve user from localStorage
-  //   if (storedUser) {
-  //     setUser(storedUser);
-  //   }
-  // }, []);
+  const [editIndex, setEditIndex] = useState(-1); 
 
   // get database
   const fetchEksamid = async () => {
@@ -65,7 +59,7 @@ function Admin() {
       },
       body: JSON.stringify(updatedEksam),
     });
-
+  
     if (response.ok) {
       const updatedEksamList = await response.json();
       setEksamid(updatedEksamList);
@@ -75,16 +69,31 @@ function Admin() {
         aeg: '',
         eksamineerija: '',
       });
+      setEditIndex(-1); // Reset the editIndex after successful update
     } else {
       console.error('Failed to update Eksam');
     }
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUpdatedEksam((prevEksam) => ({
-      ...prevEksam,
-      [name]: value,
-    }));
+  
+    try {
+      console.log('Original value:', value);
+  
+      // If the input is for 'aeg', parse and format the date and time string
+      const updatedValue = name === 'aeg' ? new Date(value).toISOString() : value;
+  
+      console.log('Updated value:', updatedValue);
+  
+      setUpdatedEksam((prevEksam) => ({
+        ...prevEksam,
+        [name]: updatedValue,
+      }));
+  
+      console.log('Updated state:', updatedEksam);
+    } catch (error) {
+      console.error('Error parsing date:', error);
+    }
   };
   const setEditEksam = (eksam) => {
     setUpdatedEksam({
@@ -113,7 +122,7 @@ function Admin() {
 
   return (
     <div className="Admin">
-      <h2>Lisa Uus Eksam</h2>
+      <h1>Admini lehe</h1>
       <div>
         <label>Koha:</label>
         <input
@@ -141,50 +150,51 @@ function Admin() {
       <button onClick={lisa}>Add Eksam</button>
       <br/>
       <table>
-        <tr>
-          <th>Koha</th>
-          <th>Aeg</th>
-          <th>Eksamineerija</th>
-          <th>Kustuta</th>
-          <th>Muuda</th>
-        </tr>
-        {eksamid.map((eksam, index) => 
-        <tr>
-          <td>{eksam.koha}</td>
-          <td>{formatDateTime(eksam.aeg)}</td>
-          <td>{eksam.eksamineerija}</td>
-          <td><button onClick={() => kustuta(eksam.id)} id='X'>x</button></td>
-          <td><button onClick={() => setEditEksam(eksam)} id='muuda'>Muuda</button></td>
-        </tr>
-        )}
+        <thead>
+          <tr>
+            <th>Koha</th>
+            <th>Aeg</th>
+            <th>Eksamineerija</th>
+            <th>Kustuta</th>
+            <th>Muuda</th>
+          </tr>
+        </thead>
+        <tbody>
+          {eksamid.map((eksam, index) => (
+            <tr key={eksam.id}>
+              <td>{editIndex === index ? (
+                <input
+                  type="text"
+                  value={updatedEksam.koha}
+                  onChange={(e) => setUpdatedEksam({ ...updatedEksam, koha: e.target.value })}
+                />
+              ) : eksam.koha}</td>
+              <td>{editIndex === index ? (
+                <input
+                  type="datetime-local"
+                  value={updatedEksam.aeg}
+                  onChange={(e) => setUpdatedEksam({ ...updatedEksam, aeg: e.target.value })}
+                />
+              ) : formatDateTime(eksam.aeg)}</td>
+              <td>{editIndex === index ? (
+                <input
+                  type="text"
+                  value={updatedEksam.eksamineerija}
+                  onChange={(e) => setUpdatedEksam({ ...updatedEksam, eksamineerija: e.target.value })}
+                />
+              ) : eksam.eksamineerija}</td>
+              <td><button onClick={() => kustuta(eksam.id)} id='X'>x</button></td>
+              <td>
+                {editIndex === index ? (
+                  <button onClick={() => updateEksam()}>Update</button>
+                ) : (
+                  <button onClick={() => { setEditIndex(index); setEditEksam(eksam); }}>Edit</button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
-      <div>
-        <label>Updated Koha:</label>
-        <input
-          type="text"
-          name="koha"
-          value={updatedEksam.koha}
-          onChange={handleInputChange}
-        />
-        <br></br>
-        <label>Updated Aeg:</label>
-        <input
-          type="text"
-          name="aeg"
-          value={updatedEksam.aeg}
-          onChange={handleInputChange}
-        />
-        <br></br>
-        <label>Updated Eksamineerija:</label>
-        <input
-          type="text"
-          name="eksamineerija"
-          value={updatedEksam.eksamineerija}
-          onChange={handleInputChange}
-        />
-        <br></br>
-        <button onClick={updateEksam}>Update Eksam</button>
-      </div>
     </div>
   );
 }
